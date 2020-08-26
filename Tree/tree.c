@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define OK            (1)
-#define ERROR         (0)
-#define OVERFLOW      (0)
+#define OK (1)
+#define ERROR (0)
+#define OVERFLOW (0)
 #define MAX_TREE_SIZE (100)
+#define SUCCESS (1)
+#define FAILED (0)
+#define HASHSIZE (12)
+#define NULLKEY (-32768)
 
 typedef int Status;
 typedef char TElemType; // 树结点的数据类型，目前暂定为整型
@@ -66,6 +70,13 @@ typedef struct BiThrNode // 二叉线索存储结点结构
     struct BiThrNode *lchild, *rchild; // 左右孩子指针
     PointerTag LTag, RTag;             // 左右标志
 } BiThrNode, *BiThrTree;
+
+typedef struct
+{
+    int *elem; // 数据元素存储基址，动态分配数组
+    int count; // 当前数据元素个数
+} HashTable;
+int m = 0; // 散列表表长，全局变量
 
 /* 二叉树的前序遍历递归算法 */
 void PreOrderTraverse(BiTree T)
@@ -178,4 +189,48 @@ Status MidOrderTraverse_Thr(BiThrTree T)
         p = p->rchild;
     }
     return OK;
+}
+
+Status InitHashTable(HashTable *H)
+{
+    int i;
+    m = HASHSIZE;
+    H->count = m;
+    H->elem = (int *)malloc(m * sizeof(int));
+    for (i = 0; i < m; i++)
+    {
+        H->elem[i] = NULLKEY;
+    }
+    return OK;
+}
+
+/* 散列函数 */
+int Hash(int key)
+{
+    return key % m; // 除留余数法
+}
+
+/* 插入关键字进散列表 */
+void InsertHash(HashTable *H, int key)
+{
+    int addr = Hash(key);            // 求散列地址
+    while (H->elem[addr] != NULLKEY) // 如果不为空，则冲突
+        addr = (addr + 1) % m;       // 开放定址的线性探测
+    H->elem[addr] = key;             // 直到有空位后插入关键字
+}
+
+/* 散列表查找关键字 */
+Status SearchHash(HashTable H, int key, int *addr)
+{
+    *addr = Hash(key);           // 求散列地址
+    while (H.elem[*addr] != key) // 如果不为空则冲突
+    {
+        *addr = (*addr + 1) % m; // 开放定址法的线性探测
+        if (H.elem[*addr] == NULLKEY || *addr == Hash(key))
+        {
+            /* 如果循回到原点 */
+            return FAILED; // 则说明关键字不存在
+        }
+    }
+    return SUCCESS;
 }
